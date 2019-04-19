@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<style>
+			*{margin: 0; padding: 0;}
+			a{ text-decoration: none;}
+			ul,ol{list-style: none;}
+			#box {width: 850px; height: 500px; margin: 60px auto; overflow: hidden; position: relative;background: url(5.jpg);}
+			#box ul{width: 5100px;position: absolute;}
+			#box ul li{height: 500px;left: 0;top: 0;  z-index: 0;float: left;}
+			/* #box ul .ac{z-index: 1;} */
+			 #box ul .ac{left: -850px;}/*非置顶 平铺 移动*/
+			#box ol{position: absolute; right: 10%; bottom: 15px; z-index: 6;}
+			#box ol li{border-radius: 50%; width: 20px; height: 20px; float: left; background: #fff; margin-left: 5px; line-height: 20px; text-align: center; cursor: pointer;}
+			#box ol .ac{background: red; color: #fff;}
+			#box>a{position: absolute; top: 50%; margin-top: -10px; height: 40px; line-height: 32px;
+					text-align: center; width: 40px; font-size: 40px; vertical-align: middle; color: #fff;
+					background: rgba(0,0,0,0.5); z-index:2;}
+			#goPrev{left: 0;}
+			#goNext{right: 0;}
+			img{width:850px; height:500px;}
+		</style>
+	</head>
+	<body>
+		<div id = "box">
+			<ul>
+				<li class = "ac"><a href="javascript:;"><img src="1.jpg" alt=""/></a></li>
+				<li><a href="javascript:;"><img src="2.jpg" alt=""/></a></li>
+				<li><a href="javascript:;"><img src="3.jpg" alt=""/></a></li>
+				<li><a href="javascript:;"><img src="4.jpg" alt=""/></a></li>
+				<li><a href="javascript:;"><img src="5.jpg" alt=""/></a></li>
+			</ul>
+			<ol>
+				<li class = "ac">1</li>
+				<li>2</li>
+				<li>3</li>
+				<li>4</li>
+				<li>5</li>
+			</ol>
+			<a href="javascript:;" id = "goPrev">&laquo;</a>
+			<a href="javascript:;" id = "goNext">&raquo;</a>
+		</div>
+	</body>
+	<script src = "tools.js"> </script>
+	<script>
+		class imgScroll {
+			constructor(selector) {
+				this.container = document.querySelector(selector);
+				this.imgs = this.container.querySelector("ul").children;
+				this.img = this.container.querySelector("ul");
+				console.log(this.img);
+				this.btns = this.container.querySelector("ol").children;
+				this.goPrev = this.container.querySelector("#goPrev");
+				this.goNext = this.container.querySelector("#goNext");
+				this.index = 0;
+				this.lastIndex = 0;
+				this.timer = null;
+				this.bindEvents();
+				this.autoPlay();
+			}
+			bindEvents(){
+				let _this = this;
+				console.log(this);
+				Array.from(this.btns).forEach(function(btn,i) {
+					btn.onclick = function(){
+						_this.index = i;
+						_this.changeImg();
+					}
+				});
+				this.goPrev.onclick = this.goPrevClick.bind(this);
+				this.goNext.onclick = this.goNextClick.bind(this);
+				this.container.onmouseenter = this.endScroll.bind(this);
+				this.container.onmouseleave = this.startScroll.bind(this);
+			}
+			//goPrev  goNext
+			goPrevClick(){
+				if(--this.index < 0) {
+					this.index = this.btns.length - 1;
+					 this.img.style.left = "-5100px";
+				}
+				this.changeImg();
+				
+			}
+			goNextClick(){
+				if(++this.index === this.btns.length) {
+					this.index = 0;
+				this.img.style.left = "850px";}
+				this.changeImg();
+				 
+			}
+			autoPlay(){
+				let _this = this;//定时器this window
+				this.timer = setInterval(function(){
+					_this.goNextClick();
+				},2000)
+			}
+			//onmouseFunction
+			endScroll(){
+				clearInterval(this.timer);
+			}
+			startScroll(){
+				this.autoPlay();
+			}
+			changeImg(){
+				this.btns[this.index].classList.add("ac");
+				// this.imgs[this.lastIndex].classList.remove("ac");
+				// this.imgs[this.index].className = "ac";
+				this.btns[this.lastIndex].className = " ";
+				tools.linearMove(this.img,"left",this.index*(-850),1000)
+				this.lastIndex = this.index;
+// 				setTimeout(function(){
+// 					this.imgs[this.lastIndex].classList.remove("ac");
+// 				})
+			}
+		}
+		new imgScroll("#box");
+	</script>
+</html>
