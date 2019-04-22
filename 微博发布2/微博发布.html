@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<style>
+			*{margin: 0; padding: 0;}
+			ul,ol{list-style: none}
+			/* body{display: flex;
+				align-items: center; justify-content: center; } */
+			.modal{
+					width: 100%; height: 100%; position: fixed; background: rgba(0,0,0,.3);left: 0;top: 0;
+				}
+			.wrap{
+				width: 25%; height: 412px; border: 1px solid #FF0000; 
+				margin: 50px auto; position: relative;
+					
+			}
+			.wrap input{
+				 width: 80px; height: 30px; position: absolute; right: 0; top: 10px;
+				  background: rgba(0,0,0,0.5); outline: none; border: none; border-radius: 20px;
+			}
+			.wrap input:hover{
+				color: darkorange;
+			}
+			.wrap div{
+				width: 100%; height: 362px; position: absolute; top: 50px; 
+				background: rgba(255,222,173,1); padding: 30px 20px; box-sizing: border-box;
+				font-size: 18px; letter-spacing: 1px;overflow: auto;
+			}
+			.wrap div p{
+				display: flex; flex-direction: column; line-height: 0;/*br行高*/margin-bottom: 5px;
+			}
+			.wrap div p .title{
+				width: 100%; height: 20px; background: cornflowerblue; font-size: 16px;line-height: 20px;
+				display: flex; justify-content: space-between;
+			}
+			.wrap div p .myPublish{
+				width: 100%; height: 40px; background: coral; line-height: 40px;
+			}
+			#container{display: none;}
+			.bs{display: block; z-index: 5; background: rgba(127,255,212,.9);
+				width: 300px; height: 200px; border: 1px solid #FF8C00; position: relative;
+			}
+			#container span{
+				position: absolute; top: 5px; left: 278px; width: 15px; height: 15px;
+				border: 1px solid #FF8C00; line-height: 15px; text-align: center;
+				 border-radius: 50%; cursor: pointer; font-size: 14px;
+			}
+			#container input,textarea{
+				outline: none;
+			}
+			#container laber:nth-of-type(1){
+				position: absolute; top: 50px;
+			}
+			#container laber:nth-of-type(1) input{
+				width: 168px; margin-left: 8px;
+			}
+			#container laber:nth-of-type(2){
+				/* position: absolute; top: 45px;left: 15px; */
+				/* margin-top: 45px; */margin-left: 15px;
+			}
+			#container laber:nth-of-type(2) textarea{
+				padding: 3px 0; position: relative; left: 8px; top: 82px;
+				width: 171px; height: 100px; line-height: 15px; /* word-wrap: break-word; *//* word-break: break-all; */
+			}
+			#container #modalSub{
+				position: absolute; width: 50px; height: 30px; right: 0; top: 100px;
+				border-radius: 20px; background: rgba(0,139,139,1);
+				line-height: 30px; text-align: center; cursor: pointer;
+			}
+			ul{
+				position: absolute;
+			}
+			ul li{
+				width: 75px; height: 20px; border: 1px solid #312f2f; 
+			}
+			ul li:hover{
+				background: #2aad40; cursor: default;
+			}
+		</style>
+	</head>
+	<body>
+		<!--  多行显示待完善-->
+		<div class = "wrap">
+			<input type="submit" id = "pageSub">
+			<div id = "write"></div>
+		</div>
+		<div id = "container"  ></div>
+		<!-- laber 定义标记 点击触发焦点-->
+		<!-- <div id = "container">
+			<span id = "colseBtn">X</span>
+			<laber>用户名：<input type="text" id = "userName"></laber>
+			<laber>内容：<textarea ></textarea></laber>
+			
+			
+		</div> -->
+		<!-- <p></p> -->
+		<script src = "js/tools.js"></script>
+		<script>
+			class wbPublish {
+				constructor(selector) {
+				    this.wrap = document.querySelector(selector);
+					this.btn = this.wrap.querySelector("#pageSub");
+					this.write = this.wrap.querySelector("#write");
+					this.container = document.querySelector("#container");
+					this.bindEvents();
+					this.time = null; //计算时间戳/1000差值   秒 超过2minute 
+					this.nextTime = null;
+					this.timeBox = new Date();	
+					this.ul = null;				
+				}
+				bindEvents() {
+					let _this = this;
+					this.btn.onclick = function() {
+						_this.container.innerHTML = `<span id = "closeBtn">X</span>
+							<laber>用户名：<input type="text" id = "userName"></laber>
+							<laber>内容：<textarea id = "txtCon"></textarea></laber>	
+							<p id = "modalSub">发布</p>`;
+						//居中 动态获取哦窗口宽度 使绝对居中
+						_this.container.className = "bs";
+						tools.showCenter(_this.container);
+						//创建模态层 覆盖page主页面
+						_this.modal = document.createElement("div");
+						_this.modal.className = "modal";
+						document.body.appendChild(_this.modal);
+					}
+					//container 发布  关闭
+					this.container.onclick = _this.containerClick.bind(this);	
+					//绑定oncontextmenu  事件 触发 禁止默认浏览器 自己写入
+					this.wrap.oncontextmenu = _this.wrapMenu.bind(this);
+					//oncontextmenu  无大小写
+					//console.log(this.wrap);console.log(this.wrapMenu);
+					//wrap  禁用默认浏览器右键菜单  自定义菜单  超过时间撤销置灰
+					document.onclick = _this.docClick.bind(this);
+					
+						
+					
+				}
+				//单击  X  发送
+				containerClick(e) {
+					e = e || event;
+					let target = e.target || e.srcElement;
+					switch(target.id){
+						case "modalSub" :
+							//写入用户名 + 内容div#write  
+							let userName = document.querySelector("#userName").value;
+							let content = document.querySelector("#txtCon").value;
+							//textarea  value  value  innerHTML区别
+							//this === container; 看调用 需要指向wbPublish 函数调用bind
+							this.time = this.timeBox.getTime();console.log(this.time);
+							//点击发布开始计时当前时间戳
+							let year = this.timeBox.getFullYear();
+							let month = this.timeBox.getMonth() + 1;
+							let today = this.timeBox.getDate();
+							//getDay  0-6 星期 getDate 当前天数
+							let hour = this.timeBox.getHours();
+							let minute = this.timeBox.getMinutes();
+							let second = this.timeBox.getSeconds();
+							this.wrap.querySelector("#write").innerHTML = `<p><span class = "title"><span>${userName}</span><span>${year}/${month}/${today}/${hour}/${minute}/${second}</span></span><br><span class = "myPublish">${content}</span></p>`; //'' `` 区别
+							//多行写入 
+						case "closeBtn" :
+							this.container.style.display = "none";
+							document.body.removeChild(this.modal);
+					}
+				}
+				wrapMenu(e) {					
+					e = e || event;			
+					//阻止默认
+					e.preventDefault ?
+						e.preventDefault() : 
+						window.returnValue = false;
+						let target = e.target || e.srcElement;
+					//自定义
+					//存在 且在p事件源位置
+					//p不行 span可以//事件源 p是父级
+					if(!this.ul && target.tagName === "SPAN") {
+						this.ul = document.createElement("ul");
+						this.ul.innerHTML = "<li>撤回消息</li>";
+						//this.ul.setAttribute("left",);
+						this.ul.style.left = e.clientX + "px";
+						this.ul.style.top = e.clientY + "px";
+						document.body.appendChild(this.ul);
+						let nextBox = new Date();
+						this.nextTime = nextBox.getTime();
+						console.log(this.nextTime);
+						//获取tis.nextTime的时间
+						//获取的是固定的发送时刻的时间戳 错误
+						// try catch
+						//先禁用默认事件
+						//左键 右键 两个事情
+						console.log(this.ul);
+						this.ul.onclick = this.ulClick.bind(this);
+						this.ul.oncontextmenu = this.ulMenu.bind(this);
+					}	
+					//待 鼠标多次点击右键 清除当前ul 重新append当前位置
+					//方法 当前位置绝对定位 style
+					//当前创建ul的默认行为禁止
+				}
+				docClick(e) {
+					e = e || event;
+					let target = e.target || e.srcElement;
+					if(this.ul) {
+						this.ul.remove();
+						this.ul = null;//否则一次性菜单
+					}
+				}
+				ulMenu(e) {
+					e = e || event;
+					e.preventDefault ?
+						e.preventDefault() : 
+						window.returnValue = false;
+					
+				}
+				ulClick(e) {
+					e = e || event;
+					console.log(11);
+					let target = e.target || e.srcElement;
+					
+					console.log(this.nextTime);
+					if(parseInt(this.nextTime - this.time) <= 2000 * 10){
+						if(target.tagName === "LI") {
+							//只读属性 = ===
+							//事件源 源头 最小
+							// console.log(document.querySelector("p"));
+							this.wrap.querySelector("#write").removeChild(document.querySelector("p"));
+							this.ul.remove();
+							this.ul = null;//否则一次性菜单
+						} 
+					}else{
+						alert("万分抱歉，超过2分钟不能够撤回已经发送的消息，祝您使用愉快！");
+						this.ul.remove();
+						this.ul = null;//移除并置空
+					}
+					
+				}
+			}
+			
+			new wbPublish(".wrap")
+		</script>
+	</body>
+</html>
